@@ -17,7 +17,7 @@ export const passwordValidation = z
   .min(6, "Password must be at least 6 characters")
   .max(50, "Password must be at most 50 characters")
 
-export const singUpSchema = z.object({
+export const signUpSchema = z.object({
   username: usernameValidation,
   email: emailValidation,
   password: passwordValidation,
