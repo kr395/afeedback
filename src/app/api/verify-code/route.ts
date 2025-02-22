@@ -1,76 +1,57 @@
-import User from "@/model/User.model";
-import { z } from "zod";
-import dbConnect from "@/lib/dbConnect";
-import { usernameValidation } from "@/schemas/signUpSchema";
+import dbConnect from '@/lib/dbConnect';
+import User from '@/model/User.model';
 
-const verifyCodeSchema = z.object({
-  username: usernameValidation,
-  code: z.string(),
-});
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
+  // Connect to the database
   await dbConnect();
 
   try {
-    const { username, code } = await req.json();
+    const { username, code } = await request.json();
     const decodedUsername = decodeURIComponent(username);
-    // validate with zod
-    const result = verifyCodeSchema.safeParse({
-      username: decodedUsername,
-      code,
-    });
-    console.log(result);
-
-    if (!result.success) {
-      const usernameError = result.error.format().username?._errors || [];
-      const codeError = result.error.format().code?._errors || [];
-      return Response.json(
-        { success: false, message: result.error.message },
-        { status: 400 }
-      );
-    }
-    const { checkedUsername, checkedCode } = result.data;
-
-    const user = await User.findOne({ username: checkedUsername });
+    const user = await User.findOne({ username: decodedUsername });
 
     if (!user) {
       return Response.json(
-        { success: false, message: "user not found" },
-        { status: 400 }
+        { success: false, message: 'User not found' },
+        { status: 404 }
       );
     }
 
-    const isCodeValid = user.verifyCode === checkedCode;
+    // Check if the code is correct and not expired
+    const isCodeValid = user.verifyCode === code;
     const isCodeNotExpired = new Date(user.verifyCodeExpiry) > new Date();
 
-    if (isCodeValid || isCodeNotExpired) {
+    if (isCodeValid && isCodeNotExpired) {
+      // Update the user's verification status
       user.isVerified = true;
       await user.save();
 
       return Response.json(
-        { success: true, message: "Account verified successfully" },
+        { success: true, message: 'Account verified successfully' },
         { status: 200 }
       );
     } else if (!isCodeNotExpired) {
+      // Code has expired
       return Response.json(
         {
           success: false,
-          message: "Verification Code expired Please signup again",
+          message:
+            'Verification code has expired. Please sign up again to get a new code.',
         },
         { status: 400 }
       );
     } else {
+      // Code is incorrect
       return Response.json(
-        { success: false, message: "Invalid code" },
+        { success: false, message: 'Incorrect verification code' },
         { status: 400 }
       );
     }
-
-    return Response.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("Error while signing up", error);
+    console.error('Error verifying user:', error);
     return Response.json(
-      { success: false, message: "Error while signing up  " },
+      { success: false, message: 'Error verifying user' },
       { status: 500 }
     );
   }
