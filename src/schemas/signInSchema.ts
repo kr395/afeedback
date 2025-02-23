@@ -1,11 +1,10 @@
 import { z } from "zod";
 
   
-export const emailValidation = z
+export const identifierValidation = z
   .string()
-  .email("Invalid email address")
-  .min(3, "Email must be at least 3 characters")
-  .max(50, "Email must be at most 50 characters");
+  .min(3, "Email/Username must be at least 3 characters")
+  .max(50, "Email/Username must be at most 50 characters");
 
 export const passwordValidation = z
   .string()
@@ -13,6 +12,6 @@ export const passwordValidation = z
   .max(50, "Password must be at most 50 characters")
 
 export const singInSchema = z.object({
-  email: emailValidation,
+  identifier: identifierValidation,
   password: passwordValidation,
 });

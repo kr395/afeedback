@@ -16,35 +16,31 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import axios, { AxiosError } from "axios";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { singInSchema } from "@/schemas/signInSchema";
 import { signIn } from "next-auth/react";
 
 export default function SignUpForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const router = useRouter();
   //zod implementation
   const form = useForm<z.infer<typeof singInSchema>>({
     resolver: zodResolver(singInSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
 
   const onSubmit = async (data: z.infer<typeof singInSchema>) => {
     const res = await signIn("credentials", {
-         redirect: false,
-         email: data.email,
-         password: data.password
-       });
+      redirect: false,
+      identifier: data.identifier,
+      password: data.password,
+    });
 
     if (res?.error) {
       toast.error(res.error);
-    } 
+    }
 
     if (res?.url) {
       router.replace("/dashboard");
@@ -62,13 +58,12 @@ export default function SignUpForm() {
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          
             <FormField
-              name="email"
+              name="identifier"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email/Username</FormLabel>
                   <Input {...field} name="email" />
                   <p className="text-muted text-gray-400 text-sm">
                     We will send you a verification code
@@ -89,26 +84,11 @@ export default function SignUpForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                "Sign Up"
-              )}
+            <Button type="submit" className="w-full">
+              Sign In
             </Button>
           </form>
         </Form>
-        <div className="text-center mt-4">
-          <p>
-            Already a member?{" "}
-            <Link href="/sign-in" className="text-blue-600 hover:text-blue-800">
-              Sign in
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
